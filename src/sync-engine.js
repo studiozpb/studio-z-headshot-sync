@@ -9,6 +9,7 @@ import {
 } from "@aws-sdk/client-s3";
 
 import { downloadDropboxFile, listDropboxFolder, refreshDropboxAccessToken } from "./dropbox.js";
+import { getPublicNotificationsState, sendSyncNotification } from "./notifications.js";
 import { appendRun, getState, updateState } from "./storage.js";
 
 function normalizeDropboxPath(input) {
@@ -424,6 +425,7 @@ export async function getPublicState() {
       secretAccessKeyPreview: maskSecret(state.r2.secretAccessKey),
       stats: r2Stats,
     },
+    notifications: getPublicNotificationsState(state),
     sync: state.sync,
     runs: state.runs,
   };
@@ -543,6 +545,20 @@ export async function runSync({ destructive, source }) {
       totalSkips: plan.skips.length,
     });
 
+    const notificationState = await getState();
+    await sendSyncNotification(notificationState, {
+      id: runId,
+      outcome: "success",
+      summary,
+      destructive,
+      source,
+      totalUploads: uploadResults.length,
+      totalDeletes: deleteResults.length,
+      totalSkips: plan.skips.length,
+    }).catch((notificationError) => {
+      console.error("Failed to send sync success SMS", notificationError);
+    });
+
     return {
       ok: true,
       summary,
@@ -557,6 +573,16 @@ export async function runSync({ destructive, source }) {
       startedAt,
       destructive,
       source,
+    });
+    const notificationState = await getState();
+    await sendSyncNotification(notificationState, {
+      id: runId,
+      outcome: "error",
+      summary,
+      destructive,
+      source,
+    }).catch((notificationError) => {
+      console.error("Failed to send sync failure SMS", notificationError);
     });
     throw new Error(summary);
   }

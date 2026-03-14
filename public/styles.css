@@ -577,6 +577,10 @@ pre {
   gap: 16px;
 }
 
+.field-span-full {
+  grid-column: 1 / -1;
+}
+
 .panel-column {
   display: grid;
   gap: 18px;

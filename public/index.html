@@ -260,6 +260,60 @@
             </div>
           </article>
 
+          <article class="panel collapsible-panel" data-panel-id="sms-alerts" data-collapsed-default="true">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Text Alerts</p>
+                <h2>SMS notifications</h2>
+              </div>
+              <button class="panel-toggle" type="button" data-panel-toggle aria-expanded="false">
+                <span class="panel-toggle-label">Show</span>
+                <span class="panel-toggle-icon">▾</span>
+              </button>
+            </div>
+            <div class="panel-body">
+              <div class="mode-summary">
+                <strong>Twilio-backed text alerts</strong>
+                <p>Send a text when a sync uploads new files to R2, and another when a sync fails.</p>
+              </div>
+              <div id="notification-summary" class="selection-card">
+                <span class="label">Alert status</span>
+                <strong id="notification-status">Not configured</strong>
+                <p id="notification-meta">Add Twilio credentials and at least one recipient.</p>
+              </div>
+              <form id="notifications-form" class="stack form-grid" novalidate>
+                <label class="field">
+                  <span>Twilio Account SID</span>
+                  <input name="twilioAccountSid" type="text" />
+                </label>
+                <label class="field">
+                  <span>Twilio Auth Token</span>
+                  <input name="twilioAuthToken" type="password" />
+                </label>
+                <label class="field">
+                  <span>Twilio From Number</span>
+                  <input name="twilioFromNumber" type="text" placeholder="+15551234567" />
+                </label>
+                <label class="field field-span-full">
+                  <span>Recipients</span>
+                  <input name="smsRecipients" type="text" placeholder="+15551234567, +15557654321" />
+                </label>
+                <label class="toggle">
+                  <input name="notifyOnSuccess" type="checkbox" />
+                  <span>Text when a sync uploads new files</span>
+                </label>
+                <label class="toggle">
+                  <input name="notifyOnFailure" type="checkbox" />
+                  <span>Text when a sync fails</span>
+                </label>
+                <div class="form-foot">
+                  <p class="field-note">Saved Twilio credentials remain on the server. Leave the secret blank to keep the existing token.</p>
+                  <button type="submit" class="button button-primary">Save Alert Settings</button>
+                </div>
+              </form>
+            </div>
+          </article>
+
           <article class="panel warning collapsible-panel" data-panel-id="mirror-mode" data-collapsed-default="true">
             <div class="panel-head">
               <div>

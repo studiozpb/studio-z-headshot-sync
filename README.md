@@ -47,6 +47,10 @@ Optional defaults:
 - `R2_PREFIX`
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_FROM_NUMBER`
+- `SMS_RECIPIENTS`
 
 ## Dropbox app setup
 
@@ -183,6 +187,10 @@ Optional defaults:
 - `R2_PREFIX=...`
 - `R2_ACCESS_KEY_ID=...`
 - `R2_SECRET_ACCESS_KEY=...`
+- `TWILIO_ACCOUNT_SID=...`
+- `TWILIO_AUTH_TOKEN=...`
+- `TWILIO_FROM_NUMBER=+15551234567`
+- `SMS_RECIPIENTS=+15551234567,+15557654321`
 
 ### 5. Add the Railway custom domain
 
@@ -224,6 +232,7 @@ as an allowed redirect URI.
 - Use `automatic copy` during normal operation
 - Use `preview mirror` before any destructive sync
 - Use `apply mirror` only when Dropbox deletions should propagate to R2
+- Use the `SMS notifications` panel if you want Twilio texts on upload success or sync failures
 
 The app requires typing today’s UTC date before a destructive mirror is allowed.
 

@@ -303,6 +303,27 @@ app.post("/api/config/sync", requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+app.post("/api/config/notifications", requireAuth, async (req, res) => {
+  await updateState((state) => {
+    const twilioAccountSid = String(req.body.twilioAccountSid || "").trim();
+    const twilioAuthToken = String(req.body.twilioAuthToken || "").trim();
+    const twilioFromNumber = String(req.body.twilioFromNumber || "").trim();
+    const smsRecipients = String(req.body.smsRecipients || "").trim();
+
+    state.notifications.twilioAccountSid =
+      twilioAccountSid || state.notifications.twilioAccountSid;
+    state.notifications.twilioAuthToken =
+      twilioAuthToken || state.notifications.twilioAuthToken;
+    state.notifications.twilioFromNumber =
+      twilioFromNumber || state.notifications.twilioFromNumber;
+    state.notifications.smsRecipients =
+      smsRecipients || state.notifications.smsRecipients;
+    state.notifications.notifyOnSuccess = Boolean(req.body.notifyOnSuccess);
+    state.notifications.notifyOnFailure = Boolean(req.body.notifyOnFailure);
+  });
+  res.json({ ok: true });
+});
+
 app.get("/api/preview/copy", requireAuth, async (_req, res) => {
   try {
     res.json(await previewSync({ destructive: false }));

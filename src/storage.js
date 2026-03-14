@@ -20,6 +20,14 @@ const defaultState = () => ({
     accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
   },
+  notifications: {
+    twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || "",
+    twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || "",
+    twilioFromNumber: process.env.TWILIO_FROM_NUMBER || "",
+    smsRecipients: process.env.SMS_RECIPIENTS || "",
+    notifyOnSuccess: false,
+    notifyOnFailure: true,
+  },
   sync: {
     autoCopyEnabled: false,
     autoMirrorEnabled: false,
@@ -55,6 +63,7 @@ async function ensureStateLoaded() {
 
   inMemoryState.dropbox = { ...defaultState().dropbox, ...inMemoryState.dropbox };
   inMemoryState.r2 = { ...defaultState().r2, ...inMemoryState.r2 };
+  inMemoryState.notifications = { ...defaultState().notifications, ...inMemoryState.notifications };
   inMemoryState.sync = { ...defaultState().sync, ...inMemoryState.sync };
   inMemoryState.manifests ||= {};
   inMemoryState.runs ||= [];

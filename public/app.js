@@ -257,6 +257,7 @@ function renderPublicState(payload) {
   const r2Stats = payload.r2.stats || {};
   const autoCopyEnabled = Boolean(payload.sync.autoCopyEnabled);
   const autoMirrorEnabled = Boolean(payload.sync.autoMirrorEnabled);
+  const notifications = payload.notifications || {};
 
   document.getElementById("last-run").textContent = formatTime(payload.sync.lastRunAt);
   document.getElementById("last-outcome").textContent =
@@ -350,6 +351,36 @@ function renderPublicState(payload) {
   document.getElementById("destination-card-prefix").textContent =
     payload.r2.prefix ? `/${payload.r2.prefix}` : "/";
 
+  const notificationsForm = document.getElementById("notifications-form");
+  notificationsForm.twilioAccountSid.value = notifications.twilioAccountSid || "";
+  notificationsForm.twilioAuthToken.value = "";
+  notificationsForm.twilioFromNumber.value = notifications.twilioFromNumber || "";
+  notificationsForm.smsRecipients.value = notifications.smsRecipients || "";
+  notificationsForm.notifyOnSuccess.checked = Boolean(notifications.notifyOnSuccess);
+  notificationsForm.notifyOnFailure.checked = Boolean(notifications.notifyOnFailure);
+  notificationsForm.dataset.hasStoredAccountSid = notifications.twilioAccountSid ? "true" : "false";
+  notificationsForm.dataset.hasStoredAuthToken = notifications.twilioAuthTokenPreview ? "true" : "false";
+  notificationsForm.dataset.hasStoredFromNumber = notifications.twilioFromNumber ? "true" : "false";
+  notificationsForm.dataset.hasStoredRecipients = notifications.smsRecipients ? "true" : "false";
+  notificationsForm.twilioAccountSid.placeholder = notifications.twilioAccountSid || "";
+  notificationsForm.twilioAuthToken.placeholder = notifications.twilioAuthTokenPreview || "";
+  notificationsForm.twilioFromNumber.placeholder = notifications.twilioFromNumber || "+15551234567";
+  notificationsForm.smsRecipients.placeholder =
+    notifications.smsRecipients || "+15551234567, +15557654321";
+
+  const notificationStatus = document.getElementById("notification-status");
+  const notificationMeta = document.getElementById("notification-meta");
+  if (!notifications.configured) {
+    notificationStatus.textContent = "Not configured";
+    notificationMeta.textContent = "Add Twilio credentials and at least one recipient.";
+  } else if (!notifications.notifyOnSuccess && !notifications.notifyOnFailure) {
+    notificationStatus.textContent = "Configured, alerts off";
+    notificationMeta.textContent = `${notifications.recipientsCount || 0} recipient${notifications.recipientsCount === 1 ? "" : "s"} saved, but both alert types are disabled.`;
+  } else {
+    notificationStatus.textContent = "SMS alerts ready";
+    notificationMeta.textContent = `${notifications.recipientsCount || 0} recipient${notifications.recipientsCount === 1 ? "" : "s"} • success ${notifications.notifyOnSuccess ? "on" : "off"} • failure ${notifications.notifyOnFailure ? "on" : "off"}`;
+  }
+
   const syncForm = document.getElementById("sync-form");
   syncForm.autoCopyEnabled.checked = Boolean(payload.sync.autoCopyEnabled);
   syncForm.autoMirrorEnabled.checked = Boolean(payload.sync.autoMirrorEnabled);
@@ -391,6 +422,7 @@ function startStateRefreshLoop() {
     const active = document.activeElement;
     if (
       active?.closest?.("#r2-form") ||
+      active?.closest?.("#notifications-form") ||
       active?.closest?.("#sync-form") ||
       active?.id === "folder-search"
     ) {
@@ -553,6 +585,61 @@ function attachEvents() {
     });
     await loadState();
     showToast(autoMirrorEnabled ? "Automatic mirror mode saved." : "Automatic sync settings saved.", "success");
+  });
+
+  document.getElementById("notifications-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const twilioAccountSid = (form.twilioAccountSid.value || "").trim();
+    const twilioAuthToken = (form.twilioAuthToken.value || "").trim();
+    const twilioFromNumber = (form.twilioFromNumber.value || "").trim();
+    const smsRecipients = (form.smsRecipients.value || "").trim();
+    const notifyOnSuccess = form.notifyOnSuccess.checked;
+    const notifyOnFailure = form.notifyOnFailure.checked;
+    const hasStoredAccountSid = form.dataset.hasStoredAccountSid === "true";
+    const hasStoredAuthToken = form.dataset.hasStoredAuthToken === "true";
+    const hasStoredFromNumber = form.dataset.hasStoredFromNumber === "true";
+    const hasStoredRecipients = form.dataset.hasStoredRecipients === "true";
+    const wantsSmsAlerts = notifyOnSuccess || notifyOnFailure;
+
+    if (wantsSmsAlerts && !twilioAccountSid && !hasStoredAccountSid) {
+      showToast("Enter the Twilio Account SID once before saving.", "error");
+      form.twilioAccountSid.focus();
+      return;
+    }
+
+    if (wantsSmsAlerts && !twilioAuthToken && !hasStoredAuthToken) {
+      showToast("Enter the Twilio Auth Token once before saving.", "error");
+      form.twilioAuthToken.focus();
+      return;
+    }
+
+    if (wantsSmsAlerts && !twilioFromNumber && !hasStoredFromNumber) {
+      showToast("Enter the Twilio From Number once before saving.", "error");
+      form.twilioFromNumber.focus();
+      return;
+    }
+
+    if (wantsSmsAlerts && !smsRecipients && !hasStoredRecipients) {
+      showToast("Enter at least one SMS recipient before saving.", "error");
+      form.smsRecipients.focus();
+      return;
+    }
+
+    await api("/api/config/notifications", {
+      method: "POST",
+      body: JSON.stringify({
+        twilioAccountSid,
+        twilioAuthToken,
+        twilioFromNumber,
+        smsRecipients,
+        notifyOnSuccess,
+        notifyOnFailure,
+      }),
+    });
+    await loadState();
+    showToast("Alert settings saved.", "success");
+    form.twilioAuthToken.value = "";
   });
 
   document.getElementById("preview-copy").addEventListener("click", async () => {
