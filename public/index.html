@@ -162,23 +162,30 @@
             <div class="panel-head">
               <div>
                 <p class="eyebrow">Automatic Copy</p>
-                <h2>Safe live updates</h2>
+                <h2>Automatic live sync</h2>
               </div>
             </div>
             <div class="mode-summary">
-              <strong>Recommended live mode</strong>
-              <p>Uploads new and changed files from Dropbox to R2 without deleting anything already online.</p>
+              <strong>Background scheduler</strong>
+              <p>Runs on Railway even when this page is closed. Choose whether the automatic loop behaves as safe copy mode or live mirror mode.</p>
             </div>
             <form id="sync-form" class="stack">
               <label class="toggle">
                 <input name="autoCopyEnabled" type="checkbox" />
                 <span>Enable automatic copy loop</span>
               </label>
+              <label class="toggle toggle-danger">
+                <input name="autoMirrorEnabled" type="checkbox" />
+                <span>Include deletions in the automatic loop (live mirror mode)</span>
+              </label>
+              <p class="field-note danger-note">
+                When enabled, the background loop will remove files from R2 whenever they disappear from the selected Dropbox folder.
+              </p>
               <label class="field">
                 <span>Interval in seconds</span>
                 <input name="intervalSeconds" type="number" min="15" step="15" />
               </label>
-              <button type="submit" class="button button-primary">Save Copy Settings</button>
+              <button type="submit" class="button button-primary">Save Sync Settings</button>
             </form>
             <div class="actions-row">
               <button id="preview-copy" class="button button-secondary" type="button">Preview Sync</button>

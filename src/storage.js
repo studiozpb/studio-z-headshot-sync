@@ -22,6 +22,7 @@ const defaultState = () => ({
   },
   sync: {
     autoCopyEnabled: false,
+    autoMirrorEnabled: false,
     intervalSeconds: 60,
     lastRunAt: null,
     lastOutcome: "idle",

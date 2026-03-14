@@ -205,6 +205,7 @@ function renderPublicState(payload) {
     ? `${payload.r2.bucket}${payload.r2.prefix ? `/${payload.r2.prefix}` : ""}`
     : "Not configured";
   const autoCopyEnabled = Boolean(payload.sync.autoCopyEnabled);
+  const autoMirrorEnabled = Boolean(payload.sync.autoMirrorEnabled);
 
   document.getElementById("last-run").textContent = formatTime(payload.sync.lastRunAt);
   document.getElementById("last-outcome").textContent =
@@ -224,8 +225,10 @@ function renderPublicState(payload) {
     ? destinationText
     : "Add account, bucket, and keys";
   document.getElementById("copy-mode").textContent = autoCopyEnabled
-    ? "Auto copy enabled"
-    : "Manual copy only";
+    ? autoMirrorEnabled
+      ? "Auto mirror enabled"
+      : "Auto copy enabled"
+    : "Manual sync only";
 
   const account = document.getElementById("dropbox-account");
   if (!payload.dropbox.connected) {
@@ -269,6 +272,7 @@ function renderPublicState(payload) {
 
   const syncForm = document.getElementById("sync-form");
   syncForm.autoCopyEnabled.checked = Boolean(payload.sync.autoCopyEnabled);
+  syncForm.autoMirrorEnabled.checked = Boolean(payload.sync.autoMirrorEnabled);
   syncForm.intervalSeconds.value = payload.sync.intervalSeconds || 60;
 
   const history = document.getElementById("history");
@@ -416,15 +420,34 @@ function attachEvents() {
   document.getElementById("sync-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
+    const autoCopyEnabled = form.autoCopyEnabled.checked;
+    const autoMirrorEnabled = form.autoMirrorEnabled.checked;
+
+    if (autoMirrorEnabled && !autoCopyEnabled) {
+      showToast("Enable the automatic loop before turning on live mirror mode.", "error");
+      form.autoCopyEnabled.focus();
+      return;
+    }
+
+    if (autoMirrorEnabled) {
+      const confirmed = window.confirm(
+        "Automatic live mirror mode will delete files from R2 when they disappear from Dropbox. Save this setting?",
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
     await api("/api/config/sync", {
       method: "POST",
       body: JSON.stringify({
-        autoCopyEnabled: form.autoCopyEnabled.checked,
+        autoCopyEnabled,
+        autoMirrorEnabled,
         intervalSeconds: Number(form.intervalSeconds.value || 60),
       }),
     });
     await loadState();
-    showToast("Copy settings saved.", "success");
+    showToast(autoMirrorEnabled ? "Automatic mirror mode saved." : "Automatic sync settings saved.", "success");
   });
 
   document.getElementById("preview-copy").addEventListener("click", async () => {

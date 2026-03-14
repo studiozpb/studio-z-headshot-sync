@@ -101,9 +101,12 @@ function scheduleAutoCopy() {
     }
 
     try {
-      await runSync({ destructive: false, source: "scheduler" });
+      await runSync({
+        destructive: Boolean(state.sync.autoMirrorEnabled),
+        source: state.sync.autoMirrorEnabled ? "scheduler-mirror" : "scheduler-copy",
+      });
     } catch (error) {
-      console.error("Auto copy failed", error);
+      console.error("Automatic sync failed", error);
     }
   }, 15000);
 }
@@ -292,6 +295,8 @@ app.post("/api/config/r2", requireAuth, async (req, res) => {
 app.post("/api/config/sync", requireAuth, async (req, res) => {
   await updateState((state) => {
     state.sync.autoCopyEnabled = Boolean(req.body.autoCopyEnabled);
+    state.sync.autoMirrorEnabled =
+      state.sync.autoCopyEnabled && Boolean(req.body.autoMirrorEnabled);
     state.sync.intervalSeconds = Math.max(15, Number(req.body.intervalSeconds || 60));
   });
   res.json({ ok: true });

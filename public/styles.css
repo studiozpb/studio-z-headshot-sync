@@ -294,6 +294,13 @@ input:focus {
   height: 20px;
 }
 
+.toggle-danger {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 118, 94, 0.08);
+  border: 1px solid rgba(255, 118, 94, 0.14);
+}
+
 .button {
   display: inline-flex;
   justify-content: center;
@@ -504,6 +511,11 @@ pre {
   margin: 0;
   color: var(--muted);
   max-width: 42ch;
+}
+
+.danger-note {
+  max-width: none;
+  color: #ffb8aa;
 }
 
 .history-list {
