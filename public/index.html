@@ -115,95 +115,95 @@
           <div id="folder-list" class="folder-list"></div>
         </article>
 
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Cloudflare R2</p>
-              <h2>Destination settings</h2>
+        <div class="panel-column">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Cloudflare R2</p>
+                <h2>Destination settings</h2>
+              </div>
             </div>
-          </div>
-          <div class="selection-card destination-card">
-            <span class="label">Current destination</span>
-            <strong id="destination-card-bucket">Not configured</strong>
-            <code id="destination-card-prefix">Set bucket and prefix below</code>
-          </div>
-          <form id="r2-form" class="stack form-grid">
-            <label class="field">
-              <span>Account ID</span>
-              <input name="accountId" type="text" required />
-            </label>
-            <label class="field">
-              <span>Bucket</span>
-              <input name="bucket" type="text" required />
-            </label>
-            <label class="field">
-              <span>Prefix</span>
-              <input name="prefix" type="text" placeholder="event-slug" />
-            </label>
-            <label class="field">
-              <span>Access Key ID</span>
-              <input name="accessKeyId" type="text" required />
-            </label>
-            <label class="field">
-              <span>Secret Access Key</span>
-              <input name="secretAccessKey" type="password" required />
-            </label>
-            <div class="form-foot">
-              <p class="field-note">Saved secrets stay on the server. Leave secret fields blank to keep current values.</p>
-              <button type="submit" class="button button-primary">Save R2 Settings</button>
+            <div class="selection-card destination-card">
+              <span class="label">Current destination</span>
+              <strong id="destination-card-bucket">Not configured</strong>
+              <code id="destination-card-prefix">Set bucket and prefix below</code>
             </div>
-          </form>
-        </article>
-      </section>
+            <form id="r2-form" class="stack form-grid" novalidate>
+              <label class="field">
+                <span>Account ID</span>
+                <input name="accountId" type="text" />
+              </label>
+              <label class="field">
+                <span>Bucket</span>
+                <input name="bucket" type="text" />
+              </label>
+              <label class="field">
+                <span>Prefix</span>
+                <input name="prefix" type="text" placeholder="event-slug" />
+              </label>
+              <label class="field">
+                <span>Access Key ID</span>
+                <input name="accessKeyId" type="text" />
+              </label>
+              <label class="field">
+                <span>Secret Access Key</span>
+                <input name="secretAccessKey" type="password" />
+              </label>
+              <div class="form-foot">
+                <p class="field-note">Saved credentials remain on the server. Leave key fields blank to keep the existing values.</p>
+                <button type="submit" class="button button-primary">Save R2 Settings</button>
+              </div>
+            </form>
+          </article>
 
-      <section class="grid two-up">
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Automatic Copy</p>
-              <h2>Safe live updates</h2>
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Automatic Copy</p>
+                <h2>Safe live updates</h2>
+              </div>
             </div>
-          </div>
-          <div class="mode-summary">
-            <strong>Recommended live mode</strong>
-            <p>Uploads new and changed files from Dropbox to R2 without deleting anything already online.</p>
-          </div>
-          <form id="sync-form" class="stack">
-            <label class="toggle">
-              <input name="autoCopyEnabled" type="checkbox" />
-              <span>Enable automatic copy loop</span>
-            </label>
-            <label class="field">
-              <span>Interval in seconds</span>
-              <input name="intervalSeconds" type="number" min="15" step="15" />
-            </label>
-            <button type="submit" class="button button-primary">Save Copy Settings</button>
-          </form>
-          <div class="actions-row">
-            <button id="preview-copy" class="button button-secondary" type="button">Preview Copy</button>
-            <button id="run-copy" class="button button-primary" type="button">Run Copy Now</button>
-          </div>
-        </article>
+            <div class="mode-summary">
+              <strong>Recommended live mode</strong>
+              <p>Uploads new and changed files from Dropbox to R2 without deleting anything already online.</p>
+            </div>
+            <form id="sync-form" class="stack">
+              <label class="toggle">
+                <input name="autoCopyEnabled" type="checkbox" />
+                <span>Enable automatic copy loop</span>
+              </label>
+              <label class="field">
+                <span>Interval in seconds</span>
+                <input name="intervalSeconds" type="number" min="15" step="15" />
+              </label>
+              <button type="submit" class="button button-primary">Save Copy Settings</button>
+            </form>
+            <div class="actions-row">
+              <button id="preview-copy" class="button button-secondary" type="button">Preview Copy</button>
+              <button id="run-copy" class="button button-primary" type="button">Run Copy Now</button>
+            </div>
+          </article>
 
-        <article class="panel warning">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Mirror Mode</p>
-              <h2>Propagate deletions</h2>
+          <article class="panel warning">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Mirror Mode</p>
+                <h2>Propagate deletions</h2>
+              </div>
             </div>
-          </div>
-          <div class="mode-summary danger-summary">
-            <strong>Manual cleanup mode</strong>
-            <p>Use this only when Dropbox is the exact source of truth and you want removed files deleted from R2.</p>
-          </div>
-          <p class="warn-copy">
-            The destructive mirror requires a confirmation challenge before it runs.
-          </p>
-          <div class="actions-row">
-            <button id="preview-sync" class="button button-secondary" type="button">Preview Mirror</button>
-            <button id="run-sync" class="button button-danger" type="button">Apply Mirror</button>
-          </div>
-        </article>
+            <div class="mode-summary danger-summary">
+              <strong>Manual cleanup mode</strong>
+              <p>Use this only when Dropbox is the exact source of truth and you want removed files deleted from R2.</p>
+            </div>
+            <p class="warn-copy">
+              The destructive mirror requires a confirmation challenge before it runs.
+            </p>
+            <div class="actions-row">
+              <button id="preview-sync" class="button button-secondary" type="button">Preview Mirror</button>
+              <button id="run-sync" class="button button-danger" type="button">Apply Mirror</button>
+            </div>
+          </article>
+        </div>
       </section>
 
       <section class="grid two-up">

@@ -185,6 +185,10 @@ function renderPublicState(payload) {
   r2Form.prefix.value = payload.r2.prefix || "";
   r2Form.accessKeyId.value = "";
   r2Form.secretAccessKey.value = "";
+  r2Form.dataset.hasStoredAccountId = payload.r2.accountId ? "true" : "false";
+  r2Form.dataset.hasStoredBucket = payload.r2.bucket ? "true" : "false";
+  r2Form.dataset.hasStoredAccessKey = payload.r2.accessKeyIdPreview ? "true" : "false";
+  r2Form.dataset.hasStoredSecretKey = payload.r2.secretAccessKeyPreview ? "true" : "false";
   r2Form.accountId.placeholder = payload.r2.accountId || "";
   r2Form.bucket.placeholder = payload.r2.bucket || "";
   r2Form.prefix.placeholder = payload.r2.prefix || "event-slug";
@@ -280,14 +284,48 @@ function attachEvents() {
   document.getElementById("r2-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
+    const accountId = (form.accountId.value || "").trim();
+    const bucket = (form.bucket.value || "").trim();
+    const prefix = (form.prefix.value || "").trim();
+    const accessKeyId = (form.accessKeyId.value || "").trim();
+    const secretAccessKey = (form.secretAccessKey.value || "").trim();
+    const hasStoredAccountId = form.dataset.hasStoredAccountId === "true";
+    const hasStoredBucket = form.dataset.hasStoredBucket === "true";
+    const hasStoredAccessKey = form.dataset.hasStoredAccessKey === "true";
+    const hasStoredSecretKey = form.dataset.hasStoredSecretKey === "true";
+
+    if (!accountId && !hasStoredAccountId) {
+      showToast("Enter the R2 account ID once before saving.", "error");
+      form.accountId.focus();
+      return;
+    }
+
+    if (!bucket && !hasStoredBucket) {
+      showToast("Enter the R2 bucket name once before saving.", "error");
+      form.bucket.focus();
+      return;
+    }
+
+    if (!accessKeyId && !hasStoredAccessKey) {
+      showToast("Enter the R2 access key ID once before saving.", "error");
+      form.accessKeyId.focus();
+      return;
+    }
+
+    if (!secretAccessKey && !hasStoredSecretKey) {
+      showToast("Enter the R2 secret key once before saving.", "error");
+      form.secretAccessKey.focus();
+      return;
+    }
+
     await api("/api/config/r2", {
       method: "POST",
       body: JSON.stringify({
-        accountId: form.accountId.value || form.accountId.placeholder,
-        bucket: form.bucket.value || form.bucket.placeholder,
-        prefix: form.prefix.value || form.prefix.placeholder,
-        accessKeyId: form.accessKeyId.value || "",
-        secretAccessKey: form.secretAccessKey.value || "",
+        accountId,
+        bucket,
+        prefix,
+        accessKeyId,
+        secretAccessKey,
       }),
     });
     await loadState();
