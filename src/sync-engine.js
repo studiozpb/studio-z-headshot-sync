@@ -2,6 +2,7 @@ import path from "node:path";
 import {
   DeleteObjectCommand,
   HeadBucketCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
@@ -84,8 +85,8 @@ function createR2Client(r2) {
   });
 }
 
-async function listR2Keys(client, bucket, prefix) {
-  const keys = new Set();
+async function listR2Objects(client, bucket, prefix) {
+  const objects = new Map();
   let continuationToken;
 
   do {
@@ -99,14 +100,35 @@ async function listR2Keys(client, bucket, prefix) {
 
     for (const item of page.Contents || []) {
       if (item.Key) {
-        keys.add(item.Key);
+        objects.set(item.Key, {
+          size: item.Size ?? null,
+          lastModified: item.LastModified ? item.LastModified.toISOString() : null,
+        });
       }
     }
 
     continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
   } while (continuationToken);
 
-  return keys;
+  return objects;
+}
+
+async function getR2ObjectMetadata(client, bucket, key) {
+  try {
+    const head = await client.send(
+      new HeadObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      }),
+    );
+
+    return {
+      metadata: head.Metadata || {},
+      contentLength: head.ContentLength ?? null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function validateState(state) {
@@ -138,7 +160,8 @@ async function buildPlan(state) {
 
   const r2Client = createR2Client(state.r2);
   await r2Client.send(new HeadBucketCommand({ Bucket: state.r2.bucket }));
-  const r2Keys = await listR2Keys(r2Client, state.r2.bucket, state.r2.prefix);
+  const r2Objects = await listR2Objects(r2Client, state.r2.bucket, state.r2.prefix);
+  const r2HeadCache = new Map();
 
   const currentFiles = new Map();
   const uploads = [];
@@ -161,10 +184,41 @@ async function buildPlan(state) {
       previous &&
       previous.contentHash === file.content_hash &&
       previous.destinationKey === destinationKey &&
-      r2Keys.has(destinationKey)
+      r2Objects.has(destinationKey)
     ) {
       skips.push({ relativePath, destinationKey });
       continue;
+    }
+
+    const existingObject = r2Objects.get(destinationKey);
+    if (existingObject) {
+      let matchedExistingObject = false;
+
+      if (existingObject.size === file.size) {
+        matchedExistingObject = true;
+      }
+
+      if (!matchedExistingObject) {
+        if (!r2HeadCache.has(destinationKey)) {
+          r2HeadCache.set(
+            destinationKey,
+            getR2ObjectMetadata(r2Client, state.r2.bucket, destinationKey),
+          );
+        }
+
+        const head = await r2HeadCache.get(destinationKey);
+        if (
+          head?.metadata?.["dropbox-content-hash"] &&
+          head.metadata["dropbox-content-hash"] === file.content_hash
+        ) {
+          matchedExistingObject = true;
+        }
+      }
+
+      if (matchedExistingObject) {
+        skips.push({ relativePath, destinationKey });
+        continue;
+      }
     }
 
     uploads.push({

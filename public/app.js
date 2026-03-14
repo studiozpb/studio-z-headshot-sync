@@ -4,6 +4,7 @@ const state = {
   selectedFolderName: "Dropbox Root",
   currentFolders: [],
   folderSearchQuery: "",
+  actionBusy: false,
 };
 
 function escapeHtml(value) {
@@ -48,6 +49,51 @@ function showToast(message, tone = "neutral") {
   showToast.timer = window.setTimeout(() => {
     toast.hidden = true;
   }, 2800);
+}
+
+function setActionBusy(isBusy, options = {}) {
+  state.actionBusy = isBusy;
+  const targets = [
+    document.getElementById("preview-sync-hero"),
+    document.getElementById("preview-copy"),
+    document.getElementById("run-copy"),
+    document.getElementById("preview-sync"),
+    document.getElementById("run-sync"),
+  ];
+
+  for (const button of targets) {
+    if (!button) {
+      continue;
+    }
+    button.disabled = isBusy;
+    button.classList.toggle("button-busy", isBusy);
+  }
+
+  if (!isBusy) {
+    document.getElementById("preview-sync-hero").textContent = "Preview Sync";
+    document.getElementById("preview-copy").textContent = "Preview Sync";
+    document.getElementById("run-copy").textContent = "Sync";
+    document.getElementById("preview-sync").textContent = "Preview Mirror";
+    document.getElementById("run-sync").textContent = "Apply Mirror";
+    return;
+  }
+
+  if (options.type === "preview-sync") {
+    document.getElementById("preview-sync-hero").textContent = "Previewing…";
+    document.getElementById("preview-copy").textContent = "Previewing…";
+  }
+
+  if (options.type === "run-sync") {
+    document.getElementById("run-copy").textContent = "Syncing…";
+  }
+
+  if (options.type === "preview-mirror") {
+    document.getElementById("preview-sync").textContent = "Previewing…";
+  }
+
+  if (options.type === "run-mirror") {
+    document.getElementById("run-sync").textContent = "Running…";
+  }
 }
 
 function renderPreviewBox(title, summary, body) {
@@ -275,10 +321,20 @@ function attachEvents() {
     await selectFolder(currentPath, displayFolderName(currentPath));
   });
 
-  document.getElementById("preview-copy-hero").addEventListener("click", async () => {
-    const payload = await api("/api/preview/copy");
-    document.getElementById("preview-output").textContent = JSON.stringify(payload, null, 2);
-    renderPreviewBox("Copy preview", payload.summary, "Review the uploads before running a live copy.");
+  document.getElementById("preview-sync-hero").addEventListener("click", async () => {
+    try {
+      setActionBusy(true, { type: "preview-sync" });
+      renderPreviewBox("Previewing sync", "Working…", "Checking Dropbox against the current R2 destination.");
+      const payload = await api("/api/preview/copy");
+      document.getElementById("preview-output").textContent = JSON.stringify(payload, null, 2);
+      renderPreviewBox("Sync preview", payload.summary, "Review the uploads before running a live sync.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Preview failed";
+      renderPreviewBox("Preview failed", message, "The sync preview could not be generated.");
+      showToast(message, "error");
+    } finally {
+      setActionBusy(false);
+    }
   });
 
   document.getElementById("r2-form").addEventListener("submit", async (event) => {
@@ -349,23 +405,53 @@ function attachEvents() {
   });
 
   document.getElementById("preview-copy").addEventListener("click", async () => {
-    const payload = await api("/api/preview/copy");
-    document.getElementById("preview-output").textContent = JSON.stringify(payload, null, 2);
-    renderPreviewBox("Copy preview", payload.summary, "Safe mode uploads new and changed files without deleting from R2.");
+    try {
+      setActionBusy(true, { type: "preview-sync" });
+      renderPreviewBox("Previewing sync", "Working…", "Checking Dropbox against the current R2 destination.");
+      const payload = await api("/api/preview/copy");
+      document.getElementById("preview-output").textContent = JSON.stringify(payload, null, 2);
+      renderPreviewBox("Sync preview", payload.summary, "Safe mode uploads new and changed files without deleting from R2.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Preview failed";
+      renderPreviewBox("Preview failed", message, "The sync preview could not be generated.");
+      showToast(message, "error");
+    } finally {
+      setActionBusy(false);
+    }
   });
 
   document.getElementById("preview-sync").addEventListener("click", async () => {
-    const payload = await api("/api/preview/sync");
-    document.getElementById("preview-output").textContent = JSON.stringify(payload, null, 2);
-    renderPreviewBox("Mirror preview", payload.summary, "Mirror mode includes deletions and should be reviewed carefully.");
+    try {
+      setActionBusy(true, { type: "preview-mirror" });
+      renderPreviewBox("Previewing mirror", "Working…", "Checking Dropbox and R2 for adds, changes, and deletions.");
+      const payload = await api("/api/preview/sync");
+      document.getElementById("preview-output").textContent = JSON.stringify(payload, null, 2);
+      renderPreviewBox("Mirror preview", payload.summary, "Mirror mode includes deletions and should be reviewed carefully.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Mirror preview failed";
+      renderPreviewBox("Mirror preview failed", message, "The destructive preview could not be generated.");
+      showToast(message, "error");
+    } finally {
+      setActionBusy(false);
+    }
   });
 
   document.getElementById("run-copy").addEventListener("click", async () => {
-    const payload = await api("/api/run/copy", { method: "POST" });
-    document.getElementById("preview-output").textContent = JSON.stringify(payload, null, 2);
-    renderPreviewBox("Copy finished", payload.summary, "R2 was updated in safe mode.");
-    await loadState();
-    showToast("Copy completed.", "success");
+    try {
+      setActionBusy(true, { type: "run-sync" });
+      renderPreviewBox("Syncing", "Working…", "Uploading new and changed files to R2 in safe mode.");
+      const payload = await api("/api/run/copy", { method: "POST" });
+      document.getElementById("preview-output").textContent = JSON.stringify(payload, null, 2);
+      renderPreviewBox("Sync finished", payload.summary, "R2 was updated in safe mode.");
+      await loadState();
+      showToast("Sync completed.", "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Sync failed";
+      renderPreviewBox("Sync failed", message, "The safe sync did not complete.");
+      showToast(message, "error");
+    } finally {
+      setActionBusy(false);
+    }
   });
 
   document.getElementById("run-sync").addEventListener("click", async () => {
@@ -377,14 +463,24 @@ function attachEvents() {
     if (!confirmation) {
       return;
     }
-    const payload = await api("/api/run/sync", {
-      method: "POST",
-      body: JSON.stringify({ confirmation }),
-    });
-    document.getElementById("preview-output").textContent = JSON.stringify(payload, null, 2);
-    renderPreviewBox("Mirror finished", payload.summary, "R2 now mirrors Dropbox, including deletions.");
-    await loadState();
-    showToast("Mirror completed.", "success");
+    try {
+      setActionBusy(true, { type: "run-mirror" });
+      renderPreviewBox("Running mirror", "Working…", "Applying Dropbox changes to R2, including deletions.");
+      const payload = await api("/api/run/sync", {
+        method: "POST",
+        body: JSON.stringify({ confirmation }),
+      });
+      document.getElementById("preview-output").textContent = JSON.stringify(payload, null, 2);
+      renderPreviewBox("Mirror finished", payload.summary, "R2 now mirrors Dropbox, including deletions.");
+      await loadState();
+      showToast("Mirror completed.", "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Mirror failed";
+      renderPreviewBox("Mirror failed", message, "The destructive mirror did not complete.");
+      showToast(message, "error");
+    } finally {
+      setActionBusy(false);
+    }
   });
 }
 
