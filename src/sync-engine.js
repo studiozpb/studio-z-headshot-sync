@@ -50,6 +50,22 @@ function summarizePlan(plan) {
   return `${plan.uploads.length} uploads, ${plan.deletes.length} deletes, ${plan.skips.length} unchanged`;
 }
 
+function makeDropboxScopeErrorMessage(requiredScope) {
+  return [
+    `Dropbox access is missing the required scope '${requiredScope}'.`,
+    "In the Dropbox App Console, click Submit on the Permissions page, then reconnect Dropbox in this dashboard so it can issue a new token.",
+  ].join(" ");
+}
+
+function normalizeSyncErrorMessage(error) {
+  const raw = error instanceof Error ? error.message : "Sync failed";
+  const scopeMatch = raw.match(/"required_scope":"([^"]+)"/);
+  if (raw.includes("missing_scope") && scopeMatch?.[1]) {
+    return makeDropboxScopeErrorMessage(scopeMatch[1]);
+  }
+  return raw;
+}
+
 function guessContentType(filePath) {
   const ext = path.extname(filePath).toLowerCase();
   switch (ext) {
@@ -278,6 +294,7 @@ export async function getPublicState() {
     dropbox: {
       connected: Boolean(state.dropbox.refreshToken),
       account: state.dropbox.account,
+      grantedScopes: state.dropbox.grantedScopes || [],
       selectedFolderPath: state.dropbox.selectedFolderPath,
       selectedFolderName: state.dropbox.selectedFolderName,
     },
@@ -420,12 +437,12 @@ export async function runSync({ destructive, source }) {
       totalSkips: plan.skips.length,
     };
   } catch (error) {
-    const summary = error instanceof Error ? error.message : "Sync failed";
+    const summary = normalizeSyncErrorMessage(error);
     await finalizeRun(runId, "error", summary, {
       startedAt,
       destructive,
       source,
     });
-    throw error;
+    throw new Error(summary);
   }
 }

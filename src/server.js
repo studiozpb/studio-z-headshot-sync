@@ -165,10 +165,19 @@ app.get("/auth/dropbox/callback", requireAuth, async (req, res) => {
     }
 
     const tokenResult = await exchangeDropboxCode(code);
+    if (!tokenResult.refresh_token) {
+      throw new Error(
+        "Dropbox did not return a refresh token. Reconnect Dropbox again after approving offline access.",
+      );
+    }
     const account = await getDropboxAccount(tokenResult.access_token);
 
     await updateState((state) => {
       state.dropbox.refreshToken = tokenResult.refresh_token;
+      state.dropbox.grantedScopes = String(tokenResult.scope || "")
+        .split(/\s+/)
+        .filter(Boolean)
+        .sort();
       state.dropbox.account = {
         accountId: account.account_id,
         email: account.email,

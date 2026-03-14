@@ -113,6 +113,28 @@ function displayFolderName(path) {
   return parts.at(-1) || "Dropbox Root";
 }
 
+function renderGrantedScopes(scopes) {
+  if (!Array.isArray(scopes) || scopes.length === 0) {
+    return `<p class="muted scope-copy">Granted scopes are not available yet. Reconnect Dropbox after approving access to refresh them.</p>`;
+  }
+
+  const chips = scopes
+    .map((scope) => `<span class="scope-chip">${escapeHtml(scope)}</span>`)
+    .join("");
+  const hasContentRead = scopes.includes("files.content.read");
+  const statusCopy = hasContentRead
+    ? "This token can download files from Dropbox."
+    : "This token cannot download files yet. Click Submit in Dropbox, then reconnect here.";
+
+  return `
+    <div class="scope-stack">
+      <span class="label">Granted scopes</span>
+      <div class="scope-row">${chips}</div>
+      <p class="muted scope-copy">${escapeHtml(statusCopy)}</p>
+    </div>
+  `;
+}
+
 function renderFolderList() {
   const folderList = document.getElementById("folder-list");
   const folderCount = document.getElementById("folder-count");
@@ -148,7 +170,7 @@ function renderFolderList() {
       (folder) => `
         <div class="folder-row ${folder.path === state.selectedFolderPath ? "selected" : ""}">
           <div class="folder-copy">
-            <span>${escapeHtml(folder.name)}</span>
+            <span class="folder-name">${escapeHtml(folder.name)}</span>
             <code>${escapeHtml(folder.path)}</code>
           </div>
           <div class="folder-actions">
@@ -215,6 +237,7 @@ function renderPublicState(payload) {
         <div><span class="label">Email</span><strong>${escapeHtml(payload.dropbox.account?.email || "")}</strong></div>
         <div><span class="label">Selected folder</span><strong>${escapeHtml(payload.dropbox.selectedFolderPath || "/")}</strong></div>
       </div>
+      ${renderGrantedScopes(payload.dropbox.grantedScopes)}
     `;
     state.selectedFolderPath = payload.dropbox.selectedFolderPath || "";
     state.selectedFolderName = payload.dropbox.selectedFolderName || "Dropbox Root";

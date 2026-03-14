@@ -27,6 +27,8 @@ export function createDropboxAuthorizeUrl(state) {
   url.searchParams.set("client_id", process.env.DROPBOX_APP_KEY || "");
   url.searchParams.set("response_type", "code");
   url.searchParams.set("token_access_type", "offline");
+  // Always force a fresh approval so new Dropbox scopes are actually granted.
+  url.searchParams.set("force_reapprove", "true");
   url.searchParams.set(
     "redirect_uri",
     `${process.env.APP_BASE_URL || "http://localhost:8787"}/auth/dropbox/callback`,

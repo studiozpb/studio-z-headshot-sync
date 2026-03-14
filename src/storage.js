@@ -9,6 +9,7 @@ const defaultState = () => ({
   dropbox: {
     account: null,
     refreshToken: null,
+    grantedScopes: [],
     selectedFolderPath: "",
     selectedFolderName: "",
   },

@@ -177,7 +177,8 @@ small {
 .panel-head,
 .browser-toolbar,
 .history-head,
-.info-grid {
+.info-grid,
+.scope-row {
   display: grid;
   gap: 16px;
 }
@@ -218,6 +219,35 @@ small {
 .actions-row,
 .info-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.scope-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.scope-row {
+  grid-template-columns: repeat(auto-fit, minmax(150px, max-content));
+  align-items: start;
+  gap: 10px;
+}
+
+.scope-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 244, 230, 0.08);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.scope-copy {
+  margin: 0;
 }
 
 .stack {
