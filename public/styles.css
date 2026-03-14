@@ -189,10 +189,45 @@ small {
   margin-bottom: 18px;
 }
 
+.status-strip-summary {
+  grid-template-columns: 1fr;
+}
+
 .status-card {
   border-radius: 22px;
   padding: 18px 20px;
   background: rgba(22, 18, 28, 0.78);
+}
+
+.status-card-r2-overview {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(0, 1.8fr);
+  align-items: center;
+  gap: 18px;
+}
+
+.status-card-copy,
+.r2-metrics {
+  display: grid;
+  gap: 10px;
+}
+
+.r2-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.r2-metric {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.r2-metric strong {
+  font-size: clamp(1.4rem, 2vw, 2rem);
+  line-height: 1;
 }
 
 .dashboard-columns {
@@ -611,6 +646,8 @@ pre {
   .status-strip,
   .dashboard-columns,
   .grid.two-up,
+  .status-card-r2-overview,
+  .r2-metrics,
   .panel-head,
   .browser-toolbar,
   .history-head,

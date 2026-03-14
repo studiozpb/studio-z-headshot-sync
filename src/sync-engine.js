@@ -22,6 +22,17 @@ function normalizeR2Prefix(input) {
   return (input || "").replace(/^\/+|\/+$/g, "");
 }
 
+function relativeR2Key(prefix, key) {
+  const normalizedPrefix = normalizeR2Prefix(prefix);
+  if (!normalizedPrefix) {
+    return key.replace(/^\/+/, "");
+  }
+  if (key === normalizedPrefix) {
+    return "";
+  }
+  return key.slice(normalizedPrefix.length).replace(/^\/+/, "");
+}
+
 function joinR2Key(prefix, relativePath) {
   const normalizedPrefix = normalizeR2Prefix(prefix);
   const normalizedPath = relativePath.replace(/^\/+/, "");
@@ -85,6 +96,30 @@ function guessContentType(filePath) {
   }
 }
 
+function isPhotoObjectKey(key) {
+  const ext = path.extname(key).toLowerCase();
+  return [".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif", ".avif"].includes(ext);
+}
+
+const R2_STATS_TTL_MS = 60 * 1000;
+let r2StatsCache = {
+  key: "",
+  computedAt: 0,
+  value: null,
+};
+
+function makeR2StatsCacheKey(r2) {
+  return [r2.accountId, r2.bucket, normalizeR2Prefix(r2.prefix)].join("::");
+}
+
+export function invalidateR2StatsCache() {
+  r2StatsCache = {
+    key: "",
+    computedAt: 0,
+    value: null,
+  };
+}
+
 async function getDropboxAccessToken(refreshToken) {
   const refreshed = await refreshDropboxAccessToken(refreshToken);
   return refreshed.access_token;
@@ -144,6 +179,82 @@ async function getR2ObjectMetadata(client, bucket, key) {
     };
   } catch {
     return null;
+  }
+}
+
+async function getR2Stats(state) {
+  const configured = Boolean(
+    state.r2.accountId &&
+      state.r2.bucket &&
+      state.r2.accessKeyId &&
+      state.r2.secretAccessKey,
+  );
+
+  if (!configured) {
+    return {
+      available: false,
+      totalGalleries: 0,
+      totalPhotos: 0,
+      averagePhotosPerGallery: 0,
+      updatedAt: null,
+      error: null,
+    };
+  }
+
+  const cacheKey = makeR2StatsCacheKey(state.r2);
+  const cacheAge = Date.now() - r2StatsCache.computedAt;
+  if (r2StatsCache.value && r2StatsCache.key === cacheKey && cacheAge < R2_STATS_TTL_MS) {
+    return r2StatsCache.value;
+  }
+
+  try {
+    const client = createR2Client(state.r2);
+    await client.send(new HeadBucketCommand({ Bucket: state.r2.bucket }));
+    const objects = await listR2Objects(client, state.r2.bucket, state.r2.prefix);
+    const galleries = new Set();
+    let totalPhotos = 0;
+
+    for (const key of objects.keys()) {
+      const relativeKey = relativeR2Key(state.r2.prefix, key);
+      if (!relativeKey || !isPhotoObjectKey(relativeKey)) {
+        continue;
+      }
+
+      const segments = relativeKey.split("/").filter(Boolean);
+      if (segments.length < 2) {
+        continue;
+      }
+
+      galleries.add(segments[0]);
+      totalPhotos += 1;
+    }
+
+    const totalGalleries = galleries.size;
+    const value = {
+      available: true,
+      totalGalleries,
+      totalPhotos,
+      averagePhotosPerGallery: totalGalleries ? totalPhotos / totalGalleries : 0,
+      updatedAt: new Date().toISOString(),
+      error: null,
+    };
+
+    r2StatsCache = {
+      key: cacheKey,
+      computedAt: Date.now(),
+      value,
+    };
+
+    return value;
+  } catch (error) {
+    return {
+      available: false,
+      totalGalleries: 0,
+      totalPhotos: 0,
+      averagePhotosPerGallery: 0,
+      updatedAt: null,
+      error: error instanceof Error ? error.message : "R2 status unavailable",
+    };
   }
 }
 
@@ -290,6 +401,7 @@ async function finalizeRun(runId, outcome, summary, extra = {}) {
 
 export async function getPublicState() {
   const state = await getState();
+  const r2Stats = await getR2Stats(state);
   return {
     dropbox: {
       connected: Boolean(state.dropbox.refreshToken),
@@ -310,6 +422,7 @@ export async function getPublicState() {
       prefix: state.r2.prefix,
       accessKeyIdPreview: maskSecret(state.r2.accessKeyId),
       secretAccessKeyPreview: maskSecret(state.r2.secretAccessKey),
+      stats: r2Stats,
     },
     sync: state.sync,
     runs: state.runs,
@@ -413,6 +526,7 @@ export async function runSync({ destructive, source }) {
     await updateState((draft) => {
       draft.manifests[plan.selectedFolderPath] = nextManifest;
     });
+    invalidateR2StatsCache();
 
     const summary = summarizePlan({
       uploads: uploadResults,

@@ -13,7 +13,7 @@ import {
   listDropboxFolder,
   refreshDropboxAccessToken,
 } from "./dropbox.js";
-import { getPublicState, previewSync, runSync } from "./sync-engine.js";
+import { getPublicState, invalidateR2StatsCache, previewSync, runSync } from "./sync-engine.js";
 import { appendRun, getState, updateState } from "./storage.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -289,6 +289,7 @@ app.post("/api/config/r2", requireAuth, async (req, res) => {
     state.r2.accessKeyId = accessKeyId || state.r2.accessKeyId;
     state.r2.secretAccessKey = secretAccessKey || state.r2.secretAccessKey;
   });
+  invalidateR2StatsCache();
   res.json({ ok: true });
 });
 

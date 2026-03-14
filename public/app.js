@@ -43,6 +43,24 @@ function formatTime(value) {
   return new Date(value).toLocaleString();
 }
 
+function formatCount(value) {
+  return Number(value || 0).toLocaleString();
+}
+
+function formatAverage(value) {
+  const numeric = Number(value || 0);
+  if (!Number.isFinite(numeric) || numeric === 0) {
+    return "0";
+  }
+  if (Math.abs(numeric - Math.round(numeric)) < 0.05) {
+    return Math.round(numeric).toLocaleString();
+  }
+  return numeric.toLocaleString(undefined, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+}
+
 function showToast(message, tone = "neutral") {
   const toast = document.getElementById("toast");
   toast.textContent = message;
@@ -236,6 +254,7 @@ function renderPublicState(payload) {
   const destinationText = payload.r2.bucket
     ? `${payload.r2.bucket}${payload.r2.prefix ? `/${payload.r2.prefix}` : ""}`
     : "Not configured";
+  const r2Stats = payload.r2.stats || {};
   const autoCopyEnabled = Boolean(payload.sync.autoCopyEnabled);
   const autoMirrorEnabled = Boolean(payload.sync.autoMirrorEnabled);
 
@@ -261,6 +280,35 @@ function renderPublicState(payload) {
       ? "Auto mirror enabled"
       : "Auto copy enabled"
     : "Manual sync only";
+
+  const r2StatsTitle = document.getElementById("r2-stats-title");
+  const r2StatsMeta = document.getElementById("r2-stats-meta");
+  const r2GalleryCount = document.getElementById("r2-gallery-count");
+  const r2PhotoCount = document.getElementById("r2-photo-count");
+  const r2AverageCount = document.getElementById("r2-average-count");
+
+  if (!configuredR2) {
+    r2StatsTitle.textContent = "Waiting on R2 settings";
+    r2StatsMeta.textContent = "Save the destination to count galleries and photos.";
+    r2GalleryCount.textContent = "—";
+    r2PhotoCount.textContent = "—";
+    r2AverageCount.textContent = "—";
+  } else if (r2Stats.error) {
+    r2StatsTitle.textContent = "R2 status unavailable";
+    r2StatsMeta.textContent = r2Stats.error;
+    r2GalleryCount.textContent = "—";
+    r2PhotoCount.textContent = "—";
+    r2AverageCount.textContent = "—";
+  } else {
+    const updatedCopy = r2Stats.updatedAt
+      ? `Updated ${new Date(r2Stats.updatedAt).toLocaleTimeString()}`
+      : "Using the current destination";
+    r2StatsTitle.textContent = destinationText;
+    r2StatsMeta.textContent = updatedCopy;
+    r2GalleryCount.textContent = formatCount(r2Stats.totalGalleries);
+    r2PhotoCount.textContent = formatCount(r2Stats.totalPhotos);
+    r2AverageCount.textContent = formatAverage(r2Stats.averagePhotosPerGallery);
+  }
 
   const account = document.getElementById("dropbox-account");
   if (!payload.dropbox.connected) {
