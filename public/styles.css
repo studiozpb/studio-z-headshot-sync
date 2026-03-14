@@ -434,6 +434,7 @@ pre {
 }
 
 .selection-card,
+.browser-box,
 .mode-summary {
   display: grid;
   gap: 8px;
@@ -447,6 +448,10 @@ pre {
 .destination-card,
 .preview-summary {
   margin-top: 0;
+}
+
+.browser-box {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .danger-summary {
