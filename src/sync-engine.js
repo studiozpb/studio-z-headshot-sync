@@ -362,6 +362,7 @@ export async function runSync({ destructive, source }) {
           Bucket: state.r2.bucket,
           Key: upload.destinationKey,
           Body: body,
+          ContentLength: upload.size,
           ContentType: guessContentType(upload.relativePath),
           Metadata: {
             "dropbox-content-hash": upload.contentHash,
