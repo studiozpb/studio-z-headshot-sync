@@ -173,6 +173,7 @@ small {
 
 .status-strip,
 .grid,
+.dashboard-columns,
 .actions-row,
 .panel-head,
 .browser-toolbar,
@@ -192,6 +193,12 @@ small {
   border-radius: 22px;
   padding: 18px 20px;
   background: rgba(22, 18, 28, 0.78);
+}
+
+.dashboard-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 18px;
+  align-items: start;
 }
 
 .grid.two-up {
@@ -219,6 +226,39 @@ small {
 .actions-row,
 .info-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panel-body {
+  display: grid;
+  gap: 16px;
+}
+
+.panel-toggle {
+  justify-self: end;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-toggle-icon {
+  transition: transform 140ms ease;
+}
+
+.panel-collapsed .panel-body {
+  display: none;
+}
+
+.panel-collapsed .panel-toggle-icon {
+  transform: rotate(-90deg);
 }
 
 .scope-stack {
@@ -560,6 +600,7 @@ pre {
 
 @media (max-width: 900px) {
   .status-strip,
+  .dashboard-columns,
   .grid.two-up,
   .panel-head,
   .browser-toolbar,

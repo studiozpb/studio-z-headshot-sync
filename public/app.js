@@ -5,7 +5,11 @@ const state = {
   currentFolders: [],
   folderSearchQuery: "",
   actionBusy: false,
+  refreshTimer: null,
 };
+
+const PANEL_STORAGE_PREFIX = "studio-z-headshot-sync.panel.";
+const STATE_REFRESH_INTERVAL_MS = 8000;
 
 function escapeHtml(value) {
   return String(value)
@@ -111,6 +115,34 @@ function displayFolderName(path) {
   }
   const parts = path.split("/").filter(Boolean);
   return parts.at(-1) || "Dropbox Root";
+}
+
+function setPanelCollapsed(panel, collapsed) {
+  const toggle = panel.querySelector("[data-panel-toggle]");
+  const label = toggle?.querySelector(".panel-toggle-label");
+  panel.classList.toggle("panel-collapsed", collapsed);
+  if (toggle) {
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+  }
+  if (label) {
+    label.textContent = collapsed ? "Show" : "Hide";
+  }
+  if (panel.dataset.panelId) {
+    window.localStorage.setItem(`${PANEL_STORAGE_PREFIX}${panel.dataset.panelId}`, collapsed ? "1" : "0");
+  }
+}
+
+function initCollapsiblePanels() {
+  document.querySelectorAll(".collapsible-panel").forEach((panel) => {
+    const key = `${PANEL_STORAGE_PREFIX}${panel.dataset.panelId || ""}`;
+    const saved = panel.dataset.panelId ? window.localStorage.getItem(key) : null;
+    const collapsed = saved === null ? panel.dataset.collapsedDefault === "true" : saved === "1";
+    setPanelCollapsed(panel, collapsed);
+
+    panel.querySelector("[data-panel-toggle]")?.addEventListener("click", () => {
+      setPanelCollapsed(panel, !panel.classList.contains("panel-collapsed"));
+    });
+  });
 }
 
 function renderGrantedScopes(scopes) {
@@ -297,6 +329,31 @@ function renderPublicState(payload) {
 async function loadState() {
   const payload = await api("/api/state");
   renderPublicState(payload);
+}
+
+function startStateRefreshLoop() {
+  if (state.refreshTimer) {
+    window.clearInterval(state.refreshTimer);
+  }
+
+  state.refreshTimer = window.setInterval(async () => {
+    if (document.visibilityState === "hidden") {
+      return;
+    }
+    const active = document.activeElement;
+    if (
+      active?.closest?.("#r2-form") ||
+      active?.closest?.("#sync-form") ||
+      active?.id === "folder-search"
+    ) {
+      return;
+    }
+    try {
+      await loadState();
+    } catch {
+      // Keep the dashboard usable even if a background refresh fails.
+    }
+  }, STATE_REFRESH_INTERVAL_MS);
 }
 
 async function browse(path = "") {
@@ -496,6 +553,7 @@ function attachEvents() {
       renderPreviewBox("Sync failed", message, "The safe sync did not complete.");
       showToast(message, "error");
     } finally {
+      await loadState().catch(() => {});
       setActionBusy(false);
     }
   });
@@ -525,12 +583,15 @@ function attachEvents() {
       renderPreviewBox("Mirror failed", message, "The destructive mirror did not complete.");
       showToast(message, "error");
     } finally {
+      await loadState().catch(() => {});
       setActionBusy(false);
     }
   });
 }
 
+initCollapsiblePanels();
 attachEvents();
+startStateRefreshLoop();
 loadState()
   .then(() => browse(""))
   .catch((error) => {

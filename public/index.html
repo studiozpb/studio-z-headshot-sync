@@ -72,52 +72,75 @@
         </div>
       </section>
 
-      <section class="grid two-up">
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Dropbox</p>
-              <h2>Source account and folder</h2>
-            </div>
-            <a href="/auth/dropbox/start" class="button button-secondary">Reconnect</a>
-          </div>
-          <div id="dropbox-account" class="stack compact"></div>
-          <div id="selected-folder-card" class="selection-card">
-            <span class="label">Selected folder</span>
-            <strong id="selected-folder-card-name">Dropbox Root</strong>
-            <code id="selected-folder-card-path">/</code>
-          </div>
-          <div class="picker-meta">
-            <div class="picker-summary">
-              <span class="label">Folder picker</span>
-              <strong id="folder-count">Loading folders…</strong>
-            </div>
-            <label class="field inline-search">
-              <span>Search current level</span>
-              <input
-                id="folder-search"
-                type="text"
-                placeholder="Filter folders in this level"
-                autocomplete="off"
-              />
-            </label>
-          </div>
-          <div class="browser-box">
-            <div class="browser-toolbar">
-              <div class="toolbar-actions">
-                <button id="browse-root" class="button button-secondary" type="button">Root</button>
-                <button id="browse-up" class="button button-secondary" type="button">Up</button>
-                <button id="use-current-folder" class="button button-secondary" type="button">
-                  Use Current Folder
-                </button>
+      <section class="dashboard-columns">
+        <div class="panel-column panel-column-left">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Dropbox</p>
+                <h2>Source account and folder</h2>
               </div>
-              <code id="browser-path">/</code>
+              <a href="/auth/dropbox/start" class="button button-secondary">Reconnect</a>
             </div>
-            <div id="folder-list" class="folder-list"></div>
-          </div>
-        </article>
+            <div id="dropbox-account" class="stack compact"></div>
+            <div id="selected-folder-card" class="selection-card">
+              <span class="label">Selected folder</span>
+              <strong id="selected-folder-card-name">Dropbox Root</strong>
+              <code id="selected-folder-card-path">/</code>
+            </div>
+            <div class="picker-meta">
+              <div class="picker-summary">
+                <span class="label">Folder picker</span>
+                <strong id="folder-count">Loading folders…</strong>
+              </div>
+              <label class="field inline-search">
+                <span>Search current level</span>
+                <input
+                  id="folder-search"
+                  type="text"
+                  placeholder="Filter folders in this level"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+            <div class="browser-box">
+              <div class="browser-toolbar">
+                <div class="toolbar-actions">
+                  <button id="browse-root" class="button button-secondary" type="button">Root</button>
+                  <button id="browse-up" class="button button-secondary" type="button">Up</button>
+                  <button id="use-current-folder" class="button button-secondary" type="button">
+                    Use Current Folder
+                  </button>
+                </div>
+                <code id="browser-path">/</code>
+              </div>
+              <div id="folder-list" class="folder-list"></div>
+            </div>
+          </article>
 
-        <div class="panel-column">
+          <article class="panel collapsible-panel" data-panel-id="current-plan">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Preview</p>
+                <h2>Current plan</h2>
+              </div>
+              <button class="panel-toggle" type="button" data-panel-toggle aria-expanded="true">
+                <span class="panel-toggle-label">Hide</span>
+                <span class="panel-toggle-icon">▾</span>
+              </button>
+            </div>
+            <div class="panel-body">
+              <div id="preview-summary" class="selection-card preview-summary">
+                <span class="label">Preview summary</span>
+                <strong>No preview yet</strong>
+                <p>Run a copy preview to see uploads before you push files live.</p>
+              </div>
+              <pre id="preview-output" class="log-box">No preview yet.</pre>
+            </div>
+          </article>
+        </div>
+
+        <div class="panel-column panel-column-right">
           <article class="panel">
             <div class="panel-head">
               <div>
@@ -158,88 +181,89 @@
             </form>
           </article>
 
-          <article class="panel">
+          <article class="panel collapsible-panel" data-panel-id="automatic-sync">
             <div class="panel-head">
               <div>
                 <p class="eyebrow">Automatic Copy</p>
                 <h2>Automatic live sync</h2>
               </div>
+              <button class="panel-toggle" type="button" data-panel-toggle aria-expanded="true">
+                <span class="panel-toggle-label">Hide</span>
+                <span class="panel-toggle-icon">▾</span>
+              </button>
             </div>
-            <div class="mode-summary">
-              <strong>Background scheduler</strong>
-              <p>Runs on Railway even when this page is closed. Choose whether the automatic loop behaves as safe copy mode or live mirror mode.</p>
-            </div>
-            <form id="sync-form" class="stack">
-              <label class="toggle">
-                <input name="autoCopyEnabled" type="checkbox" />
-                <span>Enable automatic copy loop</span>
-              </label>
-              <label class="toggle toggle-danger">
-                <input name="autoMirrorEnabled" type="checkbox" />
-                <span>Include deletions in the automatic loop (live mirror mode)</span>
-              </label>
-              <p class="field-note danger-note">
-                When enabled, the background loop will remove files from R2 whenever they disappear from the selected Dropbox folder.
-              </p>
-              <label class="field">
-                <span>Interval in seconds</span>
-                <input name="intervalSeconds" type="number" min="15" step="15" />
-              </label>
-              <button type="submit" class="button button-primary">Save Sync Settings</button>
-            </form>
-            <div class="actions-row">
-              <button id="preview-copy" class="button button-secondary" type="button">Preview Sync</button>
-              <button id="run-copy" class="button button-primary" type="button">Sync</button>
+            <div class="panel-body">
+              <div class="mode-summary">
+                <strong>Background scheduler</strong>
+                <p>Runs on Railway even when this page is closed. Choose whether the automatic loop behaves as safe copy mode or live mirror mode.</p>
+              </div>
+              <form id="sync-form" class="stack">
+                <label class="toggle">
+                  <input name="autoCopyEnabled" type="checkbox" />
+                  <span>Enable automatic copy loop</span>
+                </label>
+                <label class="toggle toggle-danger">
+                  <input name="autoMirrorEnabled" type="checkbox" />
+                  <span>Include deletions in the automatic loop (live mirror mode)</span>
+                </label>
+                <p class="field-note danger-note">
+                  When enabled, the background loop will remove files from R2 whenever they disappear from the selected Dropbox folder.
+                </p>
+                <label class="field">
+                  <span>Interval in seconds</span>
+                  <input name="intervalSeconds" type="number" min="15" step="15" />
+                </label>
+                <button type="submit" class="button button-primary">Save Sync Settings</button>
+              </form>
+              <div class="actions-row">
+                <button id="preview-copy" class="button button-secondary" type="button">Preview Sync</button>
+                <button id="run-copy" class="button button-primary" type="button">Sync</button>
+              </div>
             </div>
           </article>
 
-          <article class="panel warning">
+          <article class="panel warning collapsible-panel" data-panel-id="mirror-mode" data-collapsed-default="true">
             <div class="panel-head">
               <div>
                 <p class="eyebrow">Mirror Mode</p>
                 <h2>Propagate deletions</h2>
               </div>
+              <button class="panel-toggle" type="button" data-panel-toggle aria-expanded="false">
+                <span class="panel-toggle-label">Show</span>
+                <span class="panel-toggle-icon">▾</span>
+              </button>
             </div>
-            <div class="mode-summary danger-summary">
-              <strong>Manual cleanup mode</strong>
-              <p>Use this only when Dropbox is the exact source of truth and you want removed files deleted from R2.</p>
+            <div class="panel-body">
+              <div class="mode-summary danger-summary">
+                <strong>Manual cleanup mode</strong>
+                <p>Use this only when Dropbox is the exact source of truth and you want removed files deleted from R2.</p>
+              </div>
+              <p class="warn-copy">
+                The destructive mirror requires a confirmation challenge before it runs.
+              </p>
+              <div class="actions-row">
+                <button id="preview-sync" class="button button-secondary" type="button">Preview Mirror</button>
+                <button id="run-sync" class="button button-danger" type="button">Apply Mirror</button>
+              </div>
             </div>
-            <p class="warn-copy">
-              The destructive mirror requires a confirmation challenge before it runs.
-            </p>
-            <div class="actions-row">
-              <button id="preview-sync" class="button button-secondary" type="button">Preview Mirror</button>
-              <button id="run-sync" class="button button-danger" type="button">Apply Mirror</button>
+          </article>
+
+          <article class="panel collapsible-panel" data-panel-id="history" data-collapsed-default="true">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Run History</p>
+                <h2>Recent activity</h2>
+              </div>
+              <button class="panel-toggle" type="button" data-panel-toggle aria-expanded="false">
+                <span class="panel-toggle-label">Show</span>
+                <span class="panel-toggle-icon">▾</span>
+              </button>
+            </div>
+            <div class="panel-body">
+              <div id="history" class="history-list"></div>
             </div>
           </article>
         </div>
-      </section>
-
-      <section class="grid two-up">
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Preview</p>
-              <h2>Current plan</h2>
-            </div>
-          </div>
-          <div id="preview-summary" class="selection-card preview-summary">
-            <span class="label">Preview summary</span>
-            <strong>No preview yet</strong>
-            <p>Run a copy preview to see uploads before you push files live.</p>
-          </div>
-          <pre id="preview-output" class="log-box">No preview yet.</pre>
-        </article>
-
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Run History</p>
-              <h2>Recent activity</h2>
-            </div>
-          </div>
-          <div id="history" class="history-list"></div>
-        </article>
       </section>
 
       <div id="toast" class="toast" hidden></div>
