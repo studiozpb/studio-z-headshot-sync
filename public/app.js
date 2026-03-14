@@ -1,6 +1,9 @@
 const state = {
   currentBrowsePath: "",
   selectedFolderPath: "",
+  selectedFolderName: "Dropbox Root",
+  currentFolders: [],
+  folderSearchQuery: "",
 };
 
 function escapeHtml(value) {
@@ -56,6 +59,77 @@ function renderPreviewBox(title, summary, body) {
   `;
 }
 
+function displayFolderName(path) {
+  if (!path) {
+    return "Dropbox Root";
+  }
+  const parts = path.split("/").filter(Boolean);
+  return parts.at(-1) || "Dropbox Root";
+}
+
+function renderFolderList() {
+  const folderList = document.getElementById("folder-list");
+  const folderCount = document.getElementById("folder-count");
+  const query = state.folderSearchQuery.trim().toLowerCase();
+
+  const filteredFolders = query
+    ? state.currentFolders.filter((folder) => {
+        const name = folder.name.toLowerCase();
+        const fullPath = folder.path.toLowerCase();
+        return name.includes(query) || fullPath.includes(query);
+      })
+    : state.currentFolders;
+
+  if (state.currentFolders.length === 0) {
+    folderCount.textContent = state.currentBrowsePath
+      ? "No folders in this level"
+      : "No folders at Dropbox root";
+    folderList.innerHTML = `<p class="muted folder-empty">No folders found in this level.</p>`;
+    return;
+  }
+
+  folderCount.textContent = query
+    ? `${filteredFolders.length} of ${state.currentFolders.length} folders shown`
+    : `${state.currentFolders.length} folders in this level`;
+
+  if (filteredFolders.length === 0) {
+    folderList.innerHTML = `<p class="muted folder-empty">No folders match “${escapeHtml(state.folderSearchQuery)}”.</p>`;
+    return;
+  }
+
+  folderList.innerHTML = filteredFolders
+    .map(
+      (folder) => `
+        <div class="folder-row ${folder.path === state.selectedFolderPath ? "selected" : ""}">
+          <div class="folder-copy">
+            <span>${escapeHtml(folder.name)}</span>
+            <code>${escapeHtml(folder.path)}</code>
+          </div>
+          <div class="folder-actions">
+            <button class="button button-secondary browse-folder" data-path="${escapeHtml(folder.path)}" type="button">Open</button>
+            <button class="button button-primary choose-folder" data-path="${escapeHtml(folder.path)}" data-name="${escapeHtml(folder.name)}" type="button">Use</button>
+          </div>
+        </div>
+      `,
+    )
+    .join("");
+
+  folderList.querySelectorAll(".browse-folder").forEach((button) => {
+    button.addEventListener("click", async (event) => {
+      const nextPath = event.currentTarget.dataset.path || "";
+      await browse(nextPath);
+    });
+  });
+
+  folderList.querySelectorAll(".choose-folder").forEach((button) => {
+    button.addEventListener("click", async (event) => {
+      const nextPath = event.currentTarget.dataset.path || "";
+      const name = event.currentTarget.dataset.name || nextPath || "Dropbox Root";
+      await selectFolder(nextPath, name);
+    });
+  });
+}
+
 function renderPublicState(payload) {
   const connectedDropbox = payload.dropbox.connected;
   const configuredR2 = payload.r2.configured;
@@ -97,6 +171,7 @@ function renderPublicState(payload) {
       </div>
     `;
     state.selectedFolderPath = payload.dropbox.selectedFolderPath || "";
+    state.selectedFolderName = payload.dropbox.selectedFolderName || "Dropbox Root";
   }
 
   document.getElementById("selected-folder-card-name").textContent =
@@ -150,47 +225,11 @@ async function loadState() {
 async function browse(path = "") {
   const payload = await api(`/api/dropbox/browse?path=${encodeURIComponent(path)}`);
   state.currentBrowsePath = payload.currentPath || "";
+  state.currentFolders = payload.folders || [];
+  state.folderSearchQuery = "";
   document.getElementById("browser-path").textContent = payload.currentPath || "/";
-
-  const folderList = document.getElementById("folder-list");
-  if (!payload.folders.length && !payload.currentPath) {
-    folderList.innerHTML = `<p class="muted">No folders at the Dropbox root yet.</p>`;
-    return;
-  }
-
-  folderList.innerHTML = payload.folders.length
-    ? payload.folders
-        .map(
-          (folder) => `
-            <div class="folder-row ${folder.path === state.selectedFolderPath ? "selected" : ""}">
-              <div class="folder-copy">
-                <span>${escapeHtml(folder.name)}</span>
-                <code>${escapeHtml(folder.path)}</code>
-              </div>
-              <div class="folder-actions">
-                <button class="button button-secondary browse-folder" data-path="${escapeHtml(folder.path)}" type="button">Open</button>
-                <button class="button button-primary choose-folder" data-path="${escapeHtml(folder.path)}" data-name="${escapeHtml(folder.name)}" type="button">Use</button>
-              </div>
-            </div>
-          `,
-        )
-        .join("")
-    : `<p class="muted">No subfolders here.</p>`;
-
-  folderList.querySelectorAll(".browse-folder").forEach((button) => {
-    button.addEventListener("click", async (event) => {
-      const nextPath = event.currentTarget.dataset.path || "";
-      await browse(nextPath);
-    });
-  });
-
-  folderList.querySelectorAll(".choose-folder").forEach((button) => {
-    button.addEventListener("click", async (event) => {
-      const nextPath = event.currentTarget.dataset.path || "";
-      const name = event.currentTarget.dataset.name || nextPath || "Dropbox Root";
-      await selectFolder(nextPath, name);
-    });
-  });
+  document.getElementById("folder-search").value = "";
+  renderFolderList();
 }
 
 async function selectFolder(path, name) {
@@ -214,12 +253,22 @@ function parentPath(currentPath) {
 }
 
 function attachEvents() {
+  document.getElementById("folder-search").addEventListener("input", (event) => {
+    state.folderSearchQuery = event.currentTarget.value || "";
+    renderFolderList();
+  });
+
   document.getElementById("browse-root").addEventListener("click", () => {
     browse("");
   });
 
   document.getElementById("browse-up").addEventListener("click", () => {
     browse(parentPath(state.currentBrowsePath));
+  });
+
+  document.getElementById("use-current-folder").addEventListener("click", async () => {
+    const currentPath = state.currentBrowsePath || "";
+    await selectFolder(currentPath, displayFolderName(currentPath));
   });
 
   document.getElementById("preview-copy-hero").addEventListener("click", async () => {

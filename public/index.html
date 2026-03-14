@@ -87,10 +87,28 @@
             <strong id="selected-folder-card-name">Dropbox Root</strong>
             <code id="selected-folder-card-path">/</code>
           </div>
+          <div class="picker-meta">
+            <div class="picker-summary">
+              <span class="label">Folder picker</span>
+              <strong id="folder-count">Loading folders…</strong>
+            </div>
+            <label class="field inline-search">
+              <span>Search current level</span>
+              <input
+                id="folder-search"
+                type="text"
+                placeholder="Filter folders in this level"
+                autocomplete="off"
+              />
+            </label>
+          </div>
           <div class="browser-toolbar">
             <div class="toolbar-actions">
               <button id="browse-root" class="button button-secondary" type="button">Root</button>
               <button id="browse-up" class="button button-secondary" type="button">Up</button>
+              <button id="use-current-folder" class="button button-secondary" type="button">
+                Use Current Folder
+              </button>
             </div>
             <code id="browser-path">/</code>
           </div>

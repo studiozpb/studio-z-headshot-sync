@@ -419,6 +419,23 @@ pre {
   gap: 10px;
 }
 
+.picker-meta {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  gap: 14px;
+  align-items: end;
+  margin-top: 16px;
+}
+
+.picker-summary {
+  display: grid;
+  gap: 8px;
+}
+
+.inline-search {
+  gap: 6px;
+}
+
 .form-grid {
   gap: 16px;
 }
@@ -441,6 +458,17 @@ pre {
   max-height: 520px;
   overflow: auto;
   padding-right: 4px;
+}
+
+.folder-list {
+  max-height: 560px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.folder-empty {
+  margin: 0;
+  padding: 16px 4px;
 }
 
 .toast {
@@ -492,5 +520,9 @@ pre {
 
   .button-full {
     width: auto;
+  }
+
+  .picker-meta {
+    grid-template-columns: 1fr;
   }
 }
