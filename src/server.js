@@ -14,7 +14,7 @@ import {
   refreshDropboxAccessToken,
 } from "./dropbox.js";
 import { getPublicState, previewSync, runSync } from "./sync-engine.js";
-import { getState, updateState } from "./storage.js";
+import { appendRun, getState, updateState } from "./storage.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -106,6 +106,39 @@ function scheduleAutoCopy() {
       console.error("Auto copy failed", error);
     }
   }, 15000);
+}
+
+async function clearOrphanedActiveRun() {
+  const state = await getState();
+  const activeRun = state.sync.activeRun;
+  if (!activeRun) {
+    return;
+  }
+
+  const endedAt = new Date().toISOString();
+  const summary = `Cleared an interrupted ${activeRun.destructive ? "mirror" : "sync"} after the service restarted.`;
+
+  await updateState((draft) => {
+    if (draft.sync.activeRun?.id !== activeRun.id) {
+      return;
+    }
+    draft.sync.activeRun = null;
+    draft.sync.lastRunAt = endedAt;
+    draft.sync.lastOutcome = "error";
+    draft.sync.lastSummary = summary;
+  });
+
+  await appendRun({
+    id: `recovered-${activeRun.id}`,
+    startedAt: activeRun.startedAt || endedAt,
+    endedAt,
+    outcome: "error",
+    summary,
+    destructive: Boolean(activeRun.destructive),
+    source: "startup-recovery",
+  });
+
+  console.warn(summary);
 }
 
 app.disable("x-powered-by");
@@ -315,7 +348,16 @@ app.get("/api/health", (_req, res) => {
 });
 
 const port = Number(process.env.PORT || 8787);
-app.listen(port, () => {
-  scheduleAutoCopy();
-  console.log(`Dropbox R2 dashboard listening on http://localhost:${port}`);
+
+async function start() {
+  await clearOrphanedActiveRun();
+  app.listen(port, () => {
+    scheduleAutoCopy();
+    console.log(`Dropbox R2 dashboard listening on http://localhost:${port}`);
+  });
+}
+
+start().catch((error) => {
+  console.error("Failed to start Dropbox R2 dashboard", error);
+  process.exitCode = 1;
 });
