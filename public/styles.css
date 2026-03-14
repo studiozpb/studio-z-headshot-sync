@@ -228,6 +228,15 @@ small {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.panel-head-actions {
+  justify-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
 .panel-body {
   display: grid;
   gap: 16px;
@@ -609,6 +618,11 @@ pre {
   .info-grid,
   .hero {
     grid-template-columns: 1fr;
+  }
+
+  .panel-head-actions {
+    justify-self: stretch;
+    justify-content: flex-start;
   }
 
   .app-shell {

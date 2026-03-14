@@ -74,47 +74,55 @@
 
       <section class="dashboard-columns">
         <div class="panel-column panel-column-left">
-          <article class="panel">
+          <article class="panel collapsible-panel" data-panel-id="dropbox-settings">
             <div class="panel-head">
               <div>
                 <p class="eyebrow">Dropbox</p>
                 <h2>Source account and folder</h2>
               </div>
-              <a href="/auth/dropbox/start" class="button button-secondary">Reconnect</a>
-            </div>
-            <div id="dropbox-account" class="stack compact"></div>
-            <div id="selected-folder-card" class="selection-card">
-              <span class="label">Selected folder</span>
-              <strong id="selected-folder-card-name">Dropbox Root</strong>
-              <code id="selected-folder-card-path">/</code>
-            </div>
-            <div class="picker-meta">
-              <div class="picker-summary">
-                <span class="label">Folder picker</span>
-                <strong id="folder-count">Loading folders…</strong>
+              <div class="panel-head-actions">
+                <a href="/auth/dropbox/start" class="button button-secondary">Reconnect</a>
+                <button class="panel-toggle" type="button" data-panel-toggle aria-expanded="true">
+                  <span class="panel-toggle-label">Hide</span>
+                  <span class="panel-toggle-icon">▾</span>
+                </button>
               </div>
-              <label class="field inline-search">
-                <span>Search current level</span>
-                <input
-                  id="folder-search"
-                  type="text"
-                  placeholder="Filter folders in this level"
-                  autocomplete="off"
-                />
-              </label>
             </div>
-            <div class="browser-box">
-              <div class="browser-toolbar">
-                <div class="toolbar-actions">
-                  <button id="browse-root" class="button button-secondary" type="button">Root</button>
-                  <button id="browse-up" class="button button-secondary" type="button">Up</button>
-                  <button id="use-current-folder" class="button button-secondary" type="button">
-                    Use Current Folder
-                  </button>
+            <div class="panel-body">
+              <div id="dropbox-account" class="stack compact"></div>
+              <div id="selected-folder-card" class="selection-card">
+                <span class="label">Selected folder</span>
+                <strong id="selected-folder-card-name">Dropbox Root</strong>
+                <code id="selected-folder-card-path">/</code>
+              </div>
+              <div class="picker-meta">
+                <div class="picker-summary">
+                  <span class="label">Folder picker</span>
+                  <strong id="folder-count">Loading folders…</strong>
                 </div>
-                <code id="browser-path">/</code>
+                <label class="field inline-search">
+                  <span>Search current level</span>
+                  <input
+                    id="folder-search"
+                    type="text"
+                    placeholder="Filter folders in this level"
+                    autocomplete="off"
+                  />
+                </label>
               </div>
-              <div id="folder-list" class="folder-list"></div>
+              <div class="browser-box">
+                <div class="browser-toolbar">
+                  <div class="toolbar-actions">
+                    <button id="browse-root" class="button button-secondary" type="button">Root</button>
+                    <button id="browse-up" class="button button-secondary" type="button">Up</button>
+                    <button id="use-current-folder" class="button button-secondary" type="button">
+                      Use Current Folder
+                    </button>
+                  </div>
+                  <code id="browser-path">/</code>
+                </div>
+                <div id="folder-list" class="folder-list"></div>
+              </div>
             </div>
           </article>
 
@@ -141,44 +149,50 @@
         </div>
 
         <div class="panel-column panel-column-right">
-          <article class="panel">
+          <article class="panel collapsible-panel" data-panel-id="r2-settings">
             <div class="panel-head">
               <div>
                 <p class="eyebrow">Cloudflare R2</p>
                 <h2>Destination settings</h2>
               </div>
+              <button class="panel-toggle" type="button" data-panel-toggle aria-expanded="true">
+                <span class="panel-toggle-label">Hide</span>
+                <span class="panel-toggle-icon">▾</span>
+              </button>
             </div>
-            <div class="selection-card destination-card">
-              <span class="label">Current destination</span>
-              <strong id="destination-card-bucket">Not configured</strong>
-              <code id="destination-card-prefix">Set bucket and prefix below</code>
-            </div>
-            <form id="r2-form" class="stack form-grid" novalidate>
-              <label class="field">
-                <span>Account ID</span>
-                <input name="accountId" type="text" />
-              </label>
-              <label class="field">
-                <span>Bucket</span>
-                <input name="bucket" type="text" />
-              </label>
-              <label class="field">
-                <span>Prefix</span>
-                <input name="prefix" type="text" placeholder="event-slug" />
-              </label>
-              <label class="field">
-                <span>Access Key ID</span>
-                <input name="accessKeyId" type="text" />
-              </label>
-              <label class="field">
-                <span>Secret Access Key</span>
-                <input name="secretAccessKey" type="password" />
-              </label>
-              <div class="form-foot">
-                <p class="field-note">Saved credentials remain on the server. Leave key fields blank to keep the existing values.</p>
-                <button type="submit" class="button button-primary">Save R2 Settings</button>
+            <div class="panel-body">
+              <div class="selection-card destination-card">
+                <span class="label">Current destination</span>
+                <strong id="destination-card-bucket">Not configured</strong>
+                <code id="destination-card-prefix">Set bucket and prefix below</code>
               </div>
-            </form>
+              <form id="r2-form" class="stack form-grid" novalidate>
+                <label class="field">
+                  <span>Account ID</span>
+                  <input name="accountId" type="text" />
+                </label>
+                <label class="field">
+                  <span>Bucket</span>
+                  <input name="bucket" type="text" />
+                </label>
+                <label class="field">
+                  <span>Prefix</span>
+                  <input name="prefix" type="text" placeholder="event-slug" />
+                </label>
+                <label class="field">
+                  <span>Access Key ID</span>
+                  <input name="accessKeyId" type="text" />
+                </label>
+                <label class="field">
+                  <span>Secret Access Key</span>
+                  <input name="secretAccessKey" type="password" />
+                </label>
+                <div class="form-foot">
+                  <p class="field-note">Saved credentials remain on the server. Leave key fields blank to keep the existing values.</p>
+                  <button type="submit" class="button button-primary">Save R2 Settings</button>
+                </div>
+              </form>
+            </div>
           </article>
 
           <article class="panel collapsible-panel" data-panel-id="automatic-sync">
